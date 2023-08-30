@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/argoproj-labs/argocd-image-updater/pkg/common"
@@ -122,6 +124,8 @@ func NewAPIClient(opts *ClientOptions) (ArgoCD, error) {
 
 type ApplicationImages struct {
 	Application v1alpha1.Application
+	Name        string
+	Order       int
 	Images      image.ContainerImageList
 }
 
@@ -172,8 +176,8 @@ func matchAppLabels(appName string, appLabels map[string]string, filterLabel str
 // Retrieve a list of applications from ArgoCD that qualify for image updates
 // Application needs either to be of type Kustomize or Helm and must have the
 // correct annotation in order to be considered.
-func FilterApplicationsForUpdate(apps []v1alpha1.Application, patterns []string, appLabel string) (map[string]ApplicationImages, error) {
-	var appsForUpdate = make(map[string]ApplicationImages)
+func FilterApplicationsForUpdate(apps []v1alpha1.Application, patterns []string, appLabel string) ([]ApplicationImages, error) {
+	var appsForUpdate = make([]ApplicationImages, 0)
 
 	for _, app := range apps {
 		logCtx := log.WithContext().AddField("application", app.GetName())
@@ -206,9 +210,14 @@ func FilterApplicationsForUpdate(apps []v1alpha1.Application, patterns []string,
 		imageList := parseImageList(annotations)
 		appImages := ApplicationImages{}
 		appImages.Application = app
+		appImages.Name = app.GetName()
+		appImages.Order, _ = strconv.Atoi(annotations[common.ApplicationWideOrderOptionAnnotation])
 		appImages.Images = *imageList
-		appsForUpdate[app.GetName()] = appImages
+		appsForUpdate = append(appsForUpdate, appImages)
 	}
+
+	// Sort application based on order
+	sort.Slice(appsForUpdate, func(i, j int) bool { return appsForUpdate[i].Order < appsForUpdate[j].Order })
 
 	return appsForUpdate, nil
 }
