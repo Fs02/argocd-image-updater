@@ -206,8 +206,8 @@ func Test_FilterApplicationsForUpdate(t *testing.T) {
 		filtered, err := FilterApplicationsForUpdate(applicationList, []string{}, "")
 		require.NoError(t, err)
 		require.Len(t, filtered, 1)
-		require.Contains(t, filtered, "app1")
-		assert.Len(t, filtered["app1"].Images, 2)
+		require.Equal(t, filtered[0].Name, "app1")
+		assert.Len(t, filtered[0].Images, 2)
 	})
 
 	t.Run("Filter for applications with patterns", func(t *testing.T) {
@@ -258,9 +258,9 @@ func Test_FilterApplicationsForUpdate(t *testing.T) {
 		filtered, err := FilterApplicationsForUpdate(applicationList, []string{"app*"}, "")
 		require.NoError(t, err)
 		require.Len(t, filtered, 2)
-		require.Contains(t, filtered, "app1")
-		require.Contains(t, filtered, "app2")
-		assert.Len(t, filtered["app1"].Images, 2)
+		require.Equal(t, filtered[0].Name, "app1")
+		require.Equal(t, filtered[1].Name, "app2")
+		assert.Len(t, filtered[0].Images, 2)
 	})
 
 	t.Run("Filter for applications with label", func(t *testing.T) {
@@ -300,10 +300,64 @@ func Test_FilterApplicationsForUpdate(t *testing.T) {
 		filtered, err := FilterApplicationsForUpdate(applicationList, []string{}, "custom.label/name=xyz")
 		require.NoError(t, err)
 		require.Len(t, filtered, 1)
-		require.Contains(t, filtered, "app1")
-		assert.Len(t, filtered["app1"].Images, 2)
+		require.Equal(t, filtered[0].Name, "app1")
+		assert.Len(t, filtered[0].Images, 2)
 	})
 
+	t.Run("Filter for applications with order label", func(t *testing.T) {
+		applicationList := []v1alpha1.Application{
+			// Ordered 1
+			{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "app1",
+					Namespace: "argocd",
+					Annotations: map[string]string{
+						common.ImageUpdaterAnnotation:               "nginx, quay.io/dexidp/dex:v1.23.0",
+						common.ApplicationWideOrderOptionAnnotation: "1",
+					},
+				},
+				Spec: v1alpha1.ApplicationSpec{},
+				Status: v1alpha1.ApplicationStatus{
+					SourceType: v1alpha1.ApplicationSourceTypeKustomize,
+				},
+			},
+			// Ordered 2
+			{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "app2",
+					Namespace: "argocd",
+					Annotations: map[string]string{
+						common.ImageUpdaterAnnotation:               "nginx, quay.io/dexidp/dex:v1.23.0",
+						common.ApplicationWideOrderOptionAnnotation: "2",
+					},
+				},
+				Spec: v1alpha1.ApplicationSpec{},
+				Status: v1alpha1.ApplicationStatus{
+					SourceType: v1alpha1.ApplicationSourceTypeKustomize,
+				},
+			},
+			// Ordered not specified
+			{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "app0",
+					Namespace: "argocd",
+					Annotations: map[string]string{
+						common.ImageUpdaterAnnotation: "nginx, quay.io/dexidp/dex:v1.23.0",
+					},
+				},
+				Spec: v1alpha1.ApplicationSpec{},
+				Status: v1alpha1.ApplicationStatus{
+					SourceType: v1alpha1.ApplicationSourceTypeKustomize,
+				},
+			},
+		}
+		filtered, err := FilterApplicationsForUpdate(applicationList, []string{}, "")
+		require.NoError(t, err)
+		require.Len(t, filtered, 3)
+		require.Equal(t, filtered[0].Name, "app0")
+		require.Equal(t, filtered[1].Name, "app1")
+		require.Equal(t, filtered[2].Name, "app2")
+	})
 }
 
 func Test_GetHelmParamAnnotations(t *testing.T) {
