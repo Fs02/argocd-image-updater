@@ -126,6 +126,7 @@ type ApplicationImages struct {
 	Application v1alpha1.Application
 	Name        string
 	Order       int
+	OrderGroup  string
 	Images      image.ContainerImageList
 }
 
@@ -212,6 +213,7 @@ func FilterApplicationsForUpdate(apps []v1alpha1.Application, patterns []string,
 		appImages.Application = app
 		appImages.Name = app.GetName()
 		appImages.Order, _ = strconv.Atoi(annotations[common.ApplicationWideOrderOptionAnnotation])
+		appImages.OrderGroup = annotations[common.ApplicationWideOrderGroupOptionAnnotation]
 		appImages.Images = *imageList
 		appsForUpdate = append(appsForUpdate, appImages)
 	}

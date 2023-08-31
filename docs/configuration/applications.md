@@ -93,6 +93,7 @@ To update order is configured via an annotation on the `Application` resource:
 
 ```
 argocd-image-updater.argoproj.io/order: '1' # default 0
+argocd-image-updater.argoproj.io/order-group: 'app1'
 ```
 
 
