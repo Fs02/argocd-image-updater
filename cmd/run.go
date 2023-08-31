@@ -287,7 +287,7 @@ func runImageUpdater(cfg *ImageUpdaterConfig, warmUp bool) (argocd.ImageUpdaterR
 	var wg sync.WaitGroup
 	wg.Add(len(appList))
 
-	orderGroupMutex := make(map[string]*sync.Mutex)
+	var orderGroupMutex sync.Map
 
 	for _, curApplication := range appList {
 		app := curApplication.Name
@@ -299,16 +299,13 @@ func runImageUpdater(cfg *ImageUpdaterConfig, warmUp bool) (argocd.ImageUpdaterR
 			continue
 		}
 
-		if curApplication.OrderGroup != "" && orderGroupMutex[curApplication.OrderGroup] == nil {
-			orderGroupMutex[curApplication.OrderGroup] = &sync.Mutex{}
-		}
-
 		go func(app string, curApplication argocd.ApplicationImages) {
 			defer sem.Release(1)
 
 			if curApplication.OrderGroup != "" {
-				orderGroupMutex[curApplication.OrderGroup].Lock()
-				defer orderGroupMutex[curApplication.OrderGroup].Unlock()
+				mutex, _ := orderGroupMutex.LoadOrStore(curApplication.OrderGroup, &sync.Mutex{})
+				mutex.(*sync.Mutex).Lock()
+				defer mutex.(*sync.Mutex).Unlock()
 			}
 
 			log.Debugf("Processing application %s", app)
