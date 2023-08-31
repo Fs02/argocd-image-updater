@@ -45,6 +45,7 @@ const (
 	ApplicationWideUpdateStrategyAnnotation    = ImageUpdaterAnnotationPrefix + "/update-strategy"
 	ApplicationWidePullSecretAnnotation        = ImageUpdaterAnnotationPrefix + "/pull-secret"
 	ApplicationWideOrderOptionAnnotation       = ImageUpdaterAnnotationPrefix + "/order"
+	ApplicationWideOrderGroupOptionAnnotation  = ImageUpdaterAnnotationPrefix + "/order-group"
 )
 
 // Application update configuration related annotations
