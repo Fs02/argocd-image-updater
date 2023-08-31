@@ -85,6 +85,17 @@ The default used by Argo CD Image Updater is `argocd`.
 You can read more about the update methods and how to configure them in the
 [chapter about update methods](../basics/update-methods.md)
 
+## <a name="configure-update-order"></a>Configuring the update order
+
+Sometimes you want the application to be updated on a specific order, this is useful if you are using auto-sync/progressive-sync feature.
+
+To update order is configured via an annotation on the `Application` resource:
+
+```
+argocd-image-updater.argoproj.io/order: '1' # default 0
+```
+
+
 ## <a name="application-defaults"></a>Application defaults
 
 Additional to per-image configuration, you can also set some defaults for the
